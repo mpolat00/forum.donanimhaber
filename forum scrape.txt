@@ -1,0 +1,27 @@
+import scrapy
+
+class FordSpider(scrapy.Spider):
+    name = "ford"
+    page_number = 2
+    allowed_domains = ["forum.donanimhaber.com"]
+    start_urls = ['https://forum.donanimhaber.com/yeni-opel-astra-k-ana-konu--82219537-1680']
+    
+    def parse(self, response):
+        yorumlar = response.xpath(".//article[@class='kl-icerik-satir']")
+        for yorum in yorumlar:
+           rutbe = yorum.xpath(".//span[@class='ki-unvan']/text()").get()
+           yorum_metni = yorum.xpath(".//span[@class='msg']/table/tbody/tr/td/text()").extract()
+           tarih = yorum.xpath(".//span[@class='ki-cevaptarihi']/span/a/time/text()").extract()
+           kullanici = yorum.xpath(".//aside[@class='ki-cevapsahibi']/div/a/b/text()").extract()
+           mesajsayisi = yorum.xpath(".//span[@class='ki-mesajsayisi']/text()").extract()
+           yield{
+               'rutbeler' : rutbe,
+               'yorumlar' : yorum_metni,
+               'tarihler' : tarih,
+               'kullanicilar' : kullanici,
+               'mesajsayilari' : mesajsayisi,
+               }
+           next_page = 'https://forum.donanimhaber.com/yeni-opel-astra-k-ana-konu--82219537-'+ str(FordSpider.page_number) + '/'
+           if FordSpider.page_number < 2043:
+                FordSpider.page_number += 1
+                yield response.follow(next_page, callback=self.parse)
